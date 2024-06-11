@@ -1,4 +1,4 @@
-# Next.js 14 & Sanity Blog
+# Next.js 14 Todo App
 Next.js14の練習として簡易的なTodoアプリを作成しました。
 
 ## Getting Started

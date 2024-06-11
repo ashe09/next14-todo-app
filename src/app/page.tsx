@@ -1,17 +1,15 @@
-import { revalidatePath } from "next/cache";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
-import { ModeToggle } from "@/app/components/themeToggle";
+import { DeleteButton } from "@/app/components/DeleteButton";
+import { FormElement } from "@/app/components/FormElement";
+import { SaveButton } from "@/app/components/SaveButton";
+import { ModeToggle } from "@/app/components/ThemeToggle";
+import { deleteTodo, editTodo } from "@/app/utils/action";
 import prisma from "@/lib/db";
-
-type Todo = {
-  id?: string;
-  input: string;
-};
 
 async function getTodo() {
   const todoData = await prisma.todo.findMany({
@@ -28,66 +26,6 @@ async function getTodo() {
 
 export default async function Home() {
   const todoData = await getTodo();
-
-  async function createTodo(formData: FormData): Promise<void> {
-    "use server";
-    const input = formData.get("input") as string | null;
-
-    try {
-      if (input) {
-        const todo: Todo = { input };
-        await prisma.todo.create({
-          data: todo
-        });
-      } else {
-        throw new Error("Input is null");
-      }
-    } catch (error) {
-      console.error("Failed to Create todo", error);
-    }
-
-    revalidatePath("/");
-  }
-
-  async function editTodo(formData: FormData) {
-    "use server";
-    const input = formData.get("input") as string | null;
-    const inputId = formData.get("inputId") as string | null;
-
-    try {
-      if (input && inputId) {
-        const todo: Todo = { id: inputId, input };
-        await prisma.todo.update({
-          where: {
-            id: inputId
-          },
-          data: todo
-        });
-      } else {
-        throw new Error("Input is null. Please enter your ToDo.");
-      }
-    } catch (error) {
-      console.error("Failed to Edit todo", error);
-    }
-    revalidatePath("/");
-  }
-
-  async function deleteTodo(formData: FormData) {
-    "use server";
-
-    const inputId = formData.get("inputId") as string;
-
-    try {
-      await prisma.todo.delete({
-        where: {
-          id: inputId
-        }
-      });
-    } catch (error) {
-      console.error("Failed to Delete todo");
-    }
-    revalidatePath("/");
-  }
 
   return (
     <main className="h-dvh w-full px-6 py-10 md:p-10">
@@ -107,16 +45,8 @@ export default async function Home() {
           fill
           className="fixed left-0 top-0 -z-10 hidden h-full w-full object-cover dark:block"
         />
-        <div className="relative z-0 w-full max-w-full overflow-hidden rounded-md bg-white px-5 py-10 drop-shadow-2xl dark:bg-slate-700 md:max-w-screen-sm">
-          {
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            <form action={createTodo}>
-              <div className="flex items-center gap-x-2">
-                <Input type="text" name="input" placeholder="ToDo" />
-                <Button type="submit">Submit</Button>
-              </div>
-            </form>
-          }
+        <div className="relative z-0 w-full max-w-full overflow-hidden rounded-md bg-white px-5 py-10 drop-shadow-2xl dark:bg-slate-700 dark:drop-shadow-2xl-white md:max-w-screen-sm">
+          <FormElement />
           <ul className="prose mt-5 list-disc dark:text-gray-300">
             {todoData.map((todo, index) => (
               <li key={index} className="flex items-center gap-x-2 py-2">
@@ -136,7 +66,7 @@ export default async function Home() {
                         <input type="hidden" name="inputId" value={todo.id} />
                         <Input name="input" defaultValue={todo.input} className="mt-7 w-full" />
                         <DialogFooter className="mt-5 sm:justify-center">
-                          <Button type="submit">Save changes</Button>
+                          <SaveButton />
                         </DialogFooter>
                       </form>
                     }
@@ -146,9 +76,7 @@ export default async function Home() {
                   // eslint-disable-next-line @typescript-eslint/no-misused-promises
                   <form action={deleteTodo}>
                     <input type="hidden" name="inputId" value={todo.id} />
-                    <Button type="submit" variant="destructive">
-                      Delete
-                    </Button>
+                    <DeleteButton />
                   </form>
                 }
               </li>
